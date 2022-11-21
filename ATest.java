@@ -36,6 +36,9 @@ public class ATest extends LinearOpMode {
     rightIntake = hardwareMap.get(DcMotor.class, "rightIntake"); 
     gripServo = hardwareMap.get(Servo.class, "gripServo");
     motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
+    leftArm.setDirection(DcMotor.Direction.REVERSE);
+    leftIntake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     
     // Put initialization blocks here.
     waitForStart();
@@ -67,40 +70,28 @@ public class ATest extends LinearOpMode {
       motorBackLeft.setPower(backLeftPower);
       motorFrontRight.setPower(frontRightPower);
       motorBackRight.setPower(backRightPower);
-      if (leftIntake.getCurrentPosition()>=-15){
-        leftIntake.setPower(-0.2);
-      }
-      else{
-        if (leftIntake.getCurrentPosition()>=-95){
-          if (-gamepad2.right_stick_y>0){
-            leftIntake.setPower(gamepad2.right_stick_y*0.75);
-          }
-          else if (-gamepad2.right_stick_y<0){
-            leftIntake.setPower(gamepad2.right_stick_y*0.1);
-          }
-          else {
-            leftIntake.setPower(-0.25);
-          }
-        }
-      
-        else if (leftIntake.getCurrentPosition()<-105){
-          if (-gamepad2.right_stick_y>0){
-            leftIntake.setPower(gamepad2.right_stick_y*0.1);
-          }
-          else if (-gamepad2.right_stick_y<0){
-            leftIntake.setPower(gamepad2.right_stick_y*0.75);
-          }
-          else {
-            leftIntake.setPower(0.25);
-          }
-        }
+      if (gamepad2.left_stick_button){
+        leftIntake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
       }
       if (gamepad2.left_bumper){
-        gripServo.setPosition(0);
+        gripServo.setPosition(0.5);
         
       }
       if (gamepad2.right_bumper){
-        gripServo.setPosition(-1);
+        gripServo.setPosition(0);
+      }
+      if (gamepad2.dpad_up){
+        leftArm.setPower(0.3);
+        rightArm.setPower(0.3);
+      }
+      else if (gamepad2.dpad_down){
+        leftArm.setPower(-0.3);
+        rightArm.setPower(-0.3);
+      }
+      else {
+        leftArm.setPower(0.1);
+        rightArm.setPower(0.1);
         
       }
       telemetry.addData("key", leftIntake.getCurrentPosition());
