@@ -17,9 +17,8 @@ public class ATest extends LinearOpMode {
   public DcMotor motorBackLeft;
   public DcMotor leftArm;
   public DcMotor rightArm;
-  public DcMotor leftIntake;
-  public DcMotor rightIntake;
-  public Servo gripServo;
+  public Servo leftGripServo;
+  public Servo rightGripServo;
 
   /**
    * This function is executed when this Op Mode is selected from the Driver Station.
@@ -31,14 +30,11 @@ public class ATest extends LinearOpMode {
     motorBackRight  = hardwareMap.get(DcMotor.class, "motorBackRight");
     motorBackLeft  = hardwareMap.get(DcMotor.class, "motorBackLeft");
     leftArm  = hardwareMap.get(DcMotor.class, "leftArm");
-    leftIntake  = hardwareMap.get(DcMotor.class, "leftIntake");
     rightArm  = hardwareMap.get(DcMotor.class, "rightArm");
-    rightIntake = hardwareMap.get(DcMotor.class, "rightIntake"); 
-    gripServo = hardwareMap.get(Servo.class, "gripServo");
+    leftGripServo = hardwareMap.get(Servo.class, "leftGripServo");
+    rightGripServo = hardwareMap.get(Servo.class, "rightGripServo");
     motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
-    leftArm.setDirection(DcMotor.Direction.REVERSE);
-    leftIntake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    rightArm.setDirection(DcMotor.Direction.REVERSE);
     
     // Put initialization blocks here.
     waitForStart();
@@ -70,32 +66,27 @@ public class ATest extends LinearOpMode {
       motorBackLeft.setPower(backLeftPower);
       motorFrontRight.setPower(frontRightPower);
       motorBackRight.setPower(backRightPower);
-      if (gamepad2.left_stick_button){
-        leftIntake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-      }
       if (gamepad2.left_bumper){
-        gripServo.setPosition(0.5);
-        
+        rightGripServo.setPosition(0.5);
+        leftGripServo.setPosition(0.5);
       }
       if (gamepad2.right_bumper){
-        gripServo.setPosition(0);
+        rightGripServo.setPosition(1);
+        leftGripServo.setPosition(0);
       }
       if (gamepad2.dpad_up){
-        leftArm.setPower(0.3);
-        rightArm.setPower(0.3);
+        leftArm.setPower(0.5);
+        rightArm.setPower(0.5);
       }
       else if (gamepad2.dpad_down){
-        leftArm.setPower(-0.3);
-        rightArm.setPower(-0.3);
+        leftArm.setPower(-0.2);
+        rightArm.setPower(-0.2);
       }
       else {
         leftArm.setPower(0.1);
         rightArm.setPower(0.1);
         
       }
-      telemetry.addData("key", leftIntake.getCurrentPosition());
-      telemetry.addData("powet", leftIntake.getPower());
       telemetry.update();
     }
   }
