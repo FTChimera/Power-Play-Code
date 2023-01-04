@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.ArrayList;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -22,7 +23,7 @@ public class ATest_Copy extends LinearOpMode {
   public Servo gripServo;
   public Servo flipServo;
   
-  Boolean a = false;
+  Boolean a = true;
   Boolean b = true;
   Boolean c = true;
   int d;
@@ -30,7 +31,7 @@ public class ATest_Copy extends LinearOpMode {
   int ArmPosition1 = 0;
   int ArmPosition2 = 205;
   int ArmPosition3 = 375;
-  int ArmPosition4 = 505;
+  int ArmPosition4 = 480;
   int ArmPosition = 1;
   
   
@@ -46,8 +47,9 @@ public class ATest_Copy extends LinearOpMode {
   double flipPosition2 = 0.345;
   double flipPosition3 = 0.4;
   double flipPosition4 = 0.5;
-  double flipPosition5 = 0.67;
-  double flipPosition = 2;
+  double flipPosition5 = 0.6;
+  double flipPosition = 0.345;
+  double flipSpeed = 0.005;
   
   private void motorToPosition(DcMotor motor, int position, double power){
     motor.setTargetPosition(position);
@@ -56,6 +58,7 @@ public class ATest_Copy extends LinearOpMode {
   }
   
   private ElapsedTime timer = new ElapsedTime();
+  private ElapsedTime timer2 = new ElapsedTime();
   /**
    * This function is executed when this Op Mode is selected from the Driver Station.
    */
@@ -113,25 +116,39 @@ public class ATest_Copy extends LinearOpMode {
       if (gamepad2.right_bumper){
         gripServo.setPosition(0);
       }
-      if (gamepad2.dpad_up){
-        motorToPosition(Arm, ArmPosition4, 0.3);
-        flipServo.setPosition(flipPosition2);
-        ArmPosition = 4;
-        a = true;
-        d = 250;
-      }
-      else if (gamepad2.dpad_down){
-        motorToPosition(Arm, ArmPosition1, 0.2);
-        flipServo.setPosition(flipPosition2);
-        ArmPosition = 0;
-      }
-      if (a == true && Arm.getCurrentPosition()>=d){
-        flipServo.setPosition(flipPosition5);
-        flipPosition = 5;
+      if (gamepad2.dpad_up && a){
+        if (ArmPosition == 1){
+          motorToPosition(Arm, ArmPosition2, 0.3);
+          ArmPosition = 2;
+          flipPosition = flipPosition3;
+        }
+        else if (ArmPosition == 2){
+          motorToPosition(Arm, ArmPosition3, 0.3);
+          ArmPosition = 3;
+          flipPosition = flipPosition4;
+        }
         a = false;
+        timer2.reset();
       }
-      if (Arm.isBusy() && Arm.getPower() >= 0 &&(Math.abs(Arm.getTargetPosition()-Arm.getCurrentPosition())<=200)){
-        motorToPosition(Arm, Arm.getTargetPosition(), 0.2);
+      else if (gamepad2.dpad_down && a){
+        if (ArmPosition == 2){
+          motorToPosition(Arm, ArmPosition1, 0.2);
+          ArmPosition = 1;
+          flipPosition = flipPosition2;
+        }
+        else if (ArmPosition == 3){
+          motorToPosition(Arm, ArmPosition2, 0.2);
+          ArmPosition = 2;
+          flipPosition = flipPosition3;
+        }
+        a = false;
+        timer2.reset();
+      }
+      if (a == false && timer2.seconds()>0.2){
+        a = true;
+      }
+      if (Arm.isBusy() && Arm.getPower() >= 0 &&(Math.abs(Arm.getTargetPosition()-Arm.getCurrentPosition())<=100)){
+        motorToPosition(Arm, Arm.getTargetPosition(), 0.1);
       }
       
       
@@ -156,18 +173,41 @@ public class ATest_Copy extends LinearOpMode {
         b = false;
         timer.reset();
       }
-      else if (gamepad2.dpad_right){
-        motorToPosition(turnArm, turnArmPosition3, 0.2);
-        turnArmPosition = 3;
+      else if (gamepad2.dpad_right && b){
+        if (turnArmPosition == 1){
+          motorToPosition(turnArm, turnArmPosition2, 0.2);
+          turnArmPosition = 2;
+        }
+        else if (turnArmPosition == 2){
+          motorToPosition(turnArm, turnArmPosition3, 0.2);
+          turnArmPosition = 3;
+        }
+        else if (turnArmPosition == 3){
+          motorToPosition(turnArm, turnArmPosition4, 0.2);
+          turnArmPosition = 4;
+        }
+        else if (turnArmPosition == 4){
+          motorToPosition(turnArm, turnArmPosition5, 0.2);
+          turnArmPosition = 5;
+        }
+        b = false;
+        timer.reset();
       }
-      if (turnArm.isBusy() &&(Math.abs(turnArm.getTargetPosition()-turnArm.getCurrentPosition())<=100)){
+      if (turnArm.isBusy() &&(Math.abs(turnArm.getTargetPosition()-turnArm.getCurrentPosition())<=175)){
         motorToPosition(turnArm, turnArm.getTargetPosition(), 0.05);
       }
-      
-      if (timer.seconds()>0.5){
+      if (gamepad2.y){
+        flipPosition = flipPosition + flipSpeed;
+      }
+      else if (gamepad2.x){
+        flipPosition = flipPosition - flipSpeed;
+      }
+      if (timer.seconds()>0.2 && b == false){
         b = true;
       }
+      flipPosition = Range.clip(1, 0, flipPosition);
       
+      flipServo.setPosition(flipPosition);
       telemetry.addData("arm", Arm.isBusy());
       telemetry.addData("p", Arm.getPower());
       telemetry.update();
