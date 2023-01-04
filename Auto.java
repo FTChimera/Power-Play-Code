@@ -51,7 +51,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 
 
 @Autonomous
-public class Auto_NoDrop extends LinearOpMode
+public class Auto extends LinearOpMode
 {
     private DcMotor motorFrontLeft = null;
     private DcMotor motorBackLeft = null;
@@ -108,25 +108,7 @@ public class Auto_NoDrop extends LinearOpMode
         rightGripServo = hardwareMap.get(Servo.class, "rightGripServo");
         rightArm  = hardwareMap.get(DcMotor.class, "rightArm");
         motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
-        rightArm.setDirection(DcMotor.Direction.REVERSE);
-        leftArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        
-        rightGripServo.setPosition(0.5);
-        leftGripServo.setPosition(0.5);
-        
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        
-        telemetry.addLine("Waiting for start");
-        telemetry.update();
-        
-        waitForStart();
-        
-        telemetry.addLine("Started");
-        telemetry.update();
-        
-        Drive(0.25, -8, -8, -8, -8);
-        
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         pipeline = new SignalPipeline();
         webcam.setPipeline(pipeline);
@@ -145,15 +127,23 @@ public class Auto_NoDrop extends LinearOpMode
             }
         });
 
+        telemetry.addLine("Waiting for start");
+        telemetry.update();
+        rightGripServo.setPosition(0.5);
+        leftGripServo.setPosition(0.5);
+        rightArm.setDirection(DcMotor.Direction.REVERSE);
+        leftArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        waitForStart();
+        telemetry.addLine("Started");
+        telemetry.update();
         int timer = 0;
-        int signalPosition = 0;
-        while (signalPosition == 0 && opModeIsActive()) {
-            signalPosition = pipeline.signalPosition();
-            timer++; 
-            sleep (10);
-        }
+        while (pipeline.signalPosition() == 0) { timer++; sleep (10);}
         
         {
+            int startingPosition = motorFrontLeft.getCurrentPosition();
+            telemetry.addData("start", startingPosition);
+            telemetry.update();
             telemetry.addData("Frame Count", webcam.getFrameCount());
             telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
             telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
@@ -161,20 +151,54 @@ public class Auto_NoDrop extends LinearOpMode
             telemetry.addData("Overhead time ms", webcam.getOverheadTimeMs());
             telemetry.addData("Theoretical max FPS", webcam.getCurrentPipelineMaxFps());
             telemetry.addData("Time took", timer*10);
-            telemetry.addData("Signal Position",signalPosition);
+            Drive(0.5, -15, -15, -15, -15);
+            int signalPosition = pipeline.signalPosition();
+            telemetry.addData("a",signalPosition);
             telemetry.update();
             
-            Drive(0.25, -16, -16, -16, -16);
-            sleep(250);
-            Drive(0.25, 1.5, 1.5, 1.5, 1.5);
-            sleep(250);
-            if (signalPosition == 1)
-                Drive(0.25, 25, -25, -25, 25);
-            if (signalPosition == 3)
-                Drive(0.25, -24, 24, 24, -24);
+            Drive(0.5, -33, -33, -33, -33);
+            
+            leftArm.setTargetPosition(950);
+            rightArm.setTargetPosition(950);
+            leftArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightArm.setPower(0.3);
+            leftArm.setPower(0.3);
+            Drive(0.5, -12, 12, 12, -12);
+            while (leftArm.isBusy() && rightArm.isBusy()&&opModeIsActive()){}
+            Drive(0.1, 1.2, 1.2, 1.2, 1.2);
+            leftArm.setTargetPosition(835);
+            rightArm.setTargetPosition(835);
+            leftArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightArm.setPower(0.3);
+            leftArm.setPower(0.3);
+            while (leftArm.isBusy() && rightArm.isBusy()&&opModeIsActive()){}
+            sleep(200);
+            rightGripServo.setPosition(1);
+            leftGripServo.setPosition(0);
+            timers.reset();
+            while (timers.seconds()<2){
                 
-            webcam.stopStreaming();
-            webcam.closeCameraDevice();
+            }
+           
+           
+            
+            if (signalPosition == 3)
+                Drive(0.5, -12, 12, 12, -12);
+            if (signalPosition == 1)
+                Drive(0.5, 36, -36, -36, 36);
+            if (signalPosition == 2)
+                Drive(0.5, 12, -12, -12, 12);
+            telemetry.update();
+            leftArm.setTargetPosition(0);
+            rightArm.setTargetPosition(0);
+            leftArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightArm.setPower(0.2);
+            leftArm.setPower(0.2);
+            telemetry.update();
+            while (leftArm.isBusy() && opModeIsActive()){}
         }
     }
 
@@ -186,11 +210,6 @@ public class Auto_NoDrop extends LinearOpMode
         @Override
         public Mat processFrame(Mat input)
         {
-               
-               if (position != 0) {
-                   return input;
-               }
-               
                List<Mat> rgb = new ArrayList<>();
                Core.split(input, rgb);
                
@@ -232,7 +251,16 @@ public class Auto_NoDrop extends LinearOpMode
                     b = 255;
                     position=2;
                 }
-                
+               Imgproc.rectangle(
+                    input,
+                    new Point(
+                            input.cols()/4,
+                            input.rows()/4),
+                    new Point(
+                            input.cols()*(3f/4f),
+                            input.rows()*(3f/4f)),
+                    new Scalar(r, g, b), 4);
+                    
                 return input;
         }
         public int signalPosition() 
